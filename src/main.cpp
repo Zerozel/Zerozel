@@ -176,6 +176,31 @@ static void rfid_ui_task(void* p){
             }
         }
 
+        // ── MANUAL LOGOUT CHECK ───────────────────────────────────────────────
+        char key = keypad_get_key();
+        if (key == '1') {
+            uint8_t current_state = sm_get_state();
+            if (current_state == STATE_READY || current_state == STATE_REGISTER_MODE) {
+                LOG_INFO("MAIN", "Manual logout triggered via keypad");
+                
+                // 1. Clear the driver from RAM
+                sm_set_driver_uid(""); 
+                
+                // 2. Force the state machine back to locked (Saves to LittleFS)
+                sm_transition(STATE_OFFLINE_LOCKED);
+                
+                // 3. Update the UI
+                display_show_2line("   LOGGED OUT   ", "                ");
+                ui_feedback_rejected(); // A nice long beep
+                vTaskDelay(pdMS_TO_TICKS(1500));
+                
+                // 4. Return to default screen
+                display_show_2line(" STAFF LOGIN  ", " Tap Staff Card");
+                
+                continue; // Skip the RFID scan for this millisecond
+            }
+        }
+
         // ── RFID poll ─────────────────────────────────────────────────────────
         memset(uid,0,sizeof(uid));
         RFIDResult rr=rfid_poll(uid);
@@ -347,12 +372,18 @@ static void handle_register_tap(const char* uid){
         return;
     }
 
+    // 1. Generate the Random 6-Digit OTP
     uint32_t otp=OTP_MIN+(esp_random()%(OTP_MAX-OTP_MIN+1));
     LOG_INFO("MAIN","Reg: uid=%s otp=%06lu agent=%s",uid,(unsigned long)otp,sm_get_driver_uid());
 
+    // 2. Show OTP on screen & beep
     display_show_otp(otp);
     ui_feedback_otp();
-    sync_trigger_now(); 
+
+    // 3. Save the OTP to the hard drive using the existing 4-argument function.
+    // We pass the OTP as the "amount" so it saves seamlessly to the CSV format.
+    storage_append_tx(uid, (int)otp, transaction_get_ts(), sm_get_driver_uid());
+    sync_trigger_now();                 // Tells Core 1 to upload the hard drive immediately
 
     vTaskDelay(pdMS_TO_TICKS(5000));
 
