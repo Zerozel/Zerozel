@@ -26,6 +26,7 @@
 #include "transaction.h"
 #include "sync.h"
 #include "statemachine.h"
+#include "gsm.h"
 
 // ── Fallbacks for missing config variables ───────────────────────────────────
 #ifndef LCD_ANIM_FLASH_MS
@@ -123,6 +124,11 @@ static bool boot_hardware(){
         ok=false;
     }
 
+    //  THE GSM CHECK
+    if(!gsm_init(PIN_GSM_RX, PIN_GSM_TX)){
+        LOG_WARN("MAIN","GSM Module offline - falling back to WiFi");
+    }
+
     return ok;
 }
 
@@ -178,7 +184,7 @@ static void rfid_ui_task(void* p){
 
         // ── MANUAL LOGOUT CHECK ───────────────────────────────────────────────
         char key = keypad_get_key();
-        if (key == '1') {
+        if (key == '*') {
             uint8_t current_state = sm_get_state();
             if (current_state == STATE_READY || current_state == STATE_REGISTER_MODE) {
                 LOG_INFO("MAIN", "Manual logout triggered via keypad");

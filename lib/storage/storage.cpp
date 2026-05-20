@@ -2,7 +2,7 @@
 // storage.cpp  —  LittleFS implementation
 // =============================================================================
 #include "storage.h"
-#include "../logger/logger.h" 
+#include "logger.h" 
 #include <LittleFS.h>
 #include <freertos/semphr.h>
 
@@ -136,7 +136,7 @@ StorageResult storage_append_tx(const char* uid, int amt, unsigned long ts, cons
         if(c){
             while(c.available()){
                 String l = c.readStringUntil('\n');
-                l.trim(); // <-- FIXED: Split into two lines
+                l.trim(); 
                 if(l.length()) cnt++;
             }
             c.close();
@@ -185,7 +185,7 @@ int storage_get_tx_line_count(){
     int cnt = 0;
     while(f.available()){
         String l = f.readStringUntil('\n');
-        l.trim(); // <-- FIXED: Split into two lines
+        l.trim(); 
         if(l.length()) cnt++;
     }
     f.close(); _unlock();
@@ -249,7 +249,7 @@ unsigned long storage_read_sync_ts(){
     if(!f){ _unlock(); return 0; }
     String l = f.readStringUntil('\n');
     f.close(); _unlock();
-    l.trim(); // <-- FIXED: Split into two lines
+    l.trim(); 
     return (unsigned long)l.toInt();
 }
 

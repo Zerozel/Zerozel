@@ -35,6 +35,9 @@
 #define PIN_LED_GREEN 2
 #define PIN_LED_RED   4
 #define PIN_BUZZER    13
+// ── GSM MODULE PINS ──────────────────────────────────────────────────────────
+#define PIN_GSM_RX 16  // ESP32 RX2 (Connects to SIM800L TX)
+#define PIN_GSM_TX 17  // ESP32 TX2 (Connects to SIM800L RX)
 
 // RFID Scanner (SPI)
 #define PIN_RFID_SS   5
